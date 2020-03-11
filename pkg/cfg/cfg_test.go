@@ -23,3 +23,49 @@ func TestConfigParsing(t *testing.T) {
 	assert.NotEmpty(t, Cfg.JWT.MaxAge)
 
 }
+
+// Just test the merge
+func TestConfigFileMerge(t *testing.T) {
+
+	if err := os.Setenv(Branding.UCName+"_CONFIG", "../../config/test_config.yml"); err != nil {
+		log.Error(err)
+	}
+	// log.Debug("opening config")
+	setDevelopmentLogger()
+	ParseConfig()
+	SetDefaults()
+
+	// set this 
+	// cmdLineConfig = flag.String("config", "", "specify alternate .yml file as command line arg")
+
+	// to the default one
+	// assert the values
+
+	// set up some test values
+
+	// assert that they are overridden afterwards
+
+}
+
+// Test some config file and some env variable for precendence order
+func TestConfigEnvVars(t *testing.T) {
+
+	if err := os.Setenv(Branding.UCName+"_CONFIG", "../../config/test_config.yml"); err != nil {
+		log.Error(err)
+	}
+	// log.Debug("opening config")
+	setDevelopmentLogger()
+	ParseConfig()
+	SetDefaults()
+
+	// set this 
+	// cmdLineConfig = flag.String("config", "", "specify alternate .yml file as command line arg")
+
+	// to the default one
+	// assert the values
+
+	// set up some test values
+
+	// assert that they are overridden afterwards
+
+}

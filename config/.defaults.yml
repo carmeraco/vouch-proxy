@@ -1,0 +1,55 @@
+# Not meant for standalone consumption.
+# To be used in conjunction with environment variable overrides,
+# or merged with an additional config file.
+# Precendence order: .defaults.yml < config.yml < environment variables.
+
+vouch:
+  logLevel: info
+  testing: false
+
+  listen: 0.0.0.0
+  port: 9090
+
+  allowAllUsers: false
+  publicAccess: false
+
+  domains: []
+
+  jwt:
+    issuer: Vouch
+    maxAge: 240
+    compress: true
+  
+  cookie: 
+    name: VouchCookie
+    secure: false
+    httpOnly: true
+
+  session:
+    name: VouchSession
+
+  headers:
+    jwt: X-Vouch-Token
+    querystring: access_token
+    redirect: X-Vouch-Requested-URI
+    user: X-Vouch-User
+    success: X-Vouch-Success
+    claimheader: X-Vouch-IdP-Claims-
+
+  db: 
+    file: data/vouch_bolt.db
+
+# Not all of the following fields need to be set for your provider.
+# We include all keys here so that they can be overridden by environment variables.
+# See the example configs for more details.
+oauth:
+  provider: ~
+  client_id: ~
+  client_secret: ~
+  callback_urls: []
+  callback_url: ~
+  auth_url: ~
+  token_url: ~
+  user_info_url: ~
+  preferredDomain: ~
+  scopes: []

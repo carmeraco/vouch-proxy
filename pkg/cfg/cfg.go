@@ -287,7 +287,20 @@ func InitForTestPurposes() {
 
 // ParseConfig parse the config file
 func ParseConfig() {
-	log.Debug("opening config")
+	// Precendence order: .defaults.yml < config.yml < environment variables.
+	log.Debug("Loading default config")
+
+	viper.SetConfigName(".defaults")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(filepath.Join(RootDir, "config"))
+	err := viper.ReadInConfig()
+	// This shouldn't actually happen unless the default is overridden!
+	if err != nil {
+		log.Fatalf("Fatal error reading .defaults.yml config: %s", err.Error())
+		panic(err)
+	}
+
+	log.Debug("Merging additional config")
 
 	configEnv := os.Getenv(Branding.UCName + "_CONFIG")
 
@@ -306,11 +319,21 @@ func ParseConfig() {
 		viper.SetConfigType("yaml")
 		viper.AddConfigPath(filepath.Join(RootDir, "config"))
 	}
-	err := viper.ReadInConfig() // Find and read the config file
-	if err != nil {             // Handle errors reading the config file
-		log.Fatalf("Fatal error config file: %s", err.Error())
-		panic(err)
+
+	err := viper.MergeInConfig()
+
+	if err := viper.MergeInConfig(); err != nil {
+    if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+  		log.Warn("No additional config file found")
+    } else {
+  		log.Fatalf("Fatal error reading additional config file: %s", err.Error())
+			panic(err)
+    }
 	}
+
+	log.Debug("Reading environment variables for overrides")
+	viper.AutomaticEnv()
+
 	if err = UnmarshalKey(Branding.LCName, &Cfg); err != nil {
 		log.Error(err)
 	}
@@ -458,48 +481,12 @@ func SetDefaults() {
 	// viper.SetDefault("Headers.Redirect", "X-"+Branding.CcName+"-Requested-URI")
 	// viper.SetDefault("Cookie.Name", "Vouch")
 
-	// logging
-	if !viper.IsSet(Branding.LCName + ".logLevel") {
-		Cfg.LogLevel = "info"
-	}
-	// network defaults
-	if !viper.IsSet(Branding.LCName + ".listen") {
-		Cfg.Listen = "0.0.0.0"
-	}
-	if !viper.IsSet(Branding.LCName + ".port") {
-		Cfg.Port = 9090
-	}
-	if !viper.IsSet(Branding.LCName + ".allowAllUsers") {
-		Cfg.AllowAllUsers = false
-	}
-	if !viper.IsSet(Branding.LCName + ".publicAccess") {
-		Cfg.PublicAccess = false
-	}
-
-	// jwt defaults
+	// jwt
 	if !viper.IsSet(Branding.LCName + ".jwt.secret") {
 		Cfg.JWT.Secret = getOrGenerateJWTSecret()
 	}
-	if !viper.IsSet(Branding.LCName + ".jwt.issuer") {
-		Cfg.JWT.Issuer = Branding.CcName
-	}
-	if !viper.IsSet(Branding.LCName + ".jwt.maxAge") {
-		Cfg.JWT.MaxAge = 240
-	}
-	if !viper.IsSet(Branding.LCName + ".jwt.compress") {
-		Cfg.JWT.Compress = true
-	}
 
-	// cookie defaults
-	if !viper.IsSet(Branding.LCName + ".cookie.name") {
-		Cfg.Cookie.Name = Branding.CcName + "Cookie"
-	}
-	if !viper.IsSet(Branding.LCName + ".cookie.secure") {
-		Cfg.Cookie.Secure = false
-	}
-	if !viper.IsSet(Branding.LCName + ".cookie.httpOnly") {
-		Cfg.Cookie.HTTPOnly = true
-	}
+	// cookie
 	if !viper.IsSet(Branding.LCName + ".cookie.maxAge") {
 		Cfg.Cookie.MaxAge = Cfg.JWT.MaxAge
 	} else {
@@ -510,35 +497,7 @@ func SetDefaults() {
 		}
 	}
 
-	// headers defaults
-	if !viper.IsSet(Branding.LCName + ".headers.jwt") {
-		Cfg.Headers.JWT = "X-" + Branding.CcName + "-Token"
-	}
-	if !viper.IsSet(Branding.LCName + ".headers.querystring") {
-		Cfg.Headers.QueryString = "access_token"
-	}
-	if !viper.IsSet(Branding.LCName + ".headers.redirect") {
-		Cfg.Headers.Redirect = "X-" + Branding.CcName + "-Requested-URI"
-	}
-	if !viper.IsSet(Branding.LCName + ".headers.user") {
-		Cfg.Headers.User = "X-" + Branding.CcName + "-User"
-	}
-	if !viper.IsSet(Branding.LCName + ".headers.success") {
-		Cfg.Headers.Success = "X-" + Branding.CcName + "-Success"
-	}
-	if !viper.IsSet(Branding.LCName + ".headers.claimheader") {
-		Cfg.Headers.ClaimHeader = "X-" + Branding.CcName + "-IdP-Claims-"
-	}
-
-	// db defaults
-	if !viper.IsSet(Branding.LCName + ".db.file") {
-		Cfg.DB.File = "data/" + Branding.LCName + "_bolt.db"
-	}
-
 	// session
-	if !viper.IsSet(Branding.LCName + ".session.name") {
-		Cfg.Session.Name = Branding.CcName + "Session"
-	}
 	if !viper.IsSet(Branding.LCName + ".session.key") {
 		log.Warn("generating random session.key")
 		rstr, err := securerandom.Base64OfBytes(base64Bytes)
@@ -549,9 +508,6 @@ func SetDefaults() {
 	}
 
 	// testing convenience variable
-	if !viper.IsSet(Branding.LCName + ".testing") {
-		Cfg.Testing = false
-	}
 	if viper.IsSet(Branding.LCName + ".test_url") {
 		Cfg.TestURLs = append(Cfg.TestURLs, Cfg.TestURL)
 	}

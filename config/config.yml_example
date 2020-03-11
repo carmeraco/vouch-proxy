@@ -63,7 +63,7 @@ vouch:
     name: VouchCookie
     # optionally force the domain of the cookie to set
     # domain: yourdomain.com
-    secure: true
+    secure: false
     httpOnly: true
     # Set cookie maxAge to 0 to delete the cookie every time the browser is closed.
     maxAge: 14400
@@ -82,6 +82,9 @@ vouch:
     jwt: X-Vouch-Token
     querystring: access_token
     redirect: X-Vouch-Requested-URI
+    user: X-Vouch-User
+    success: X-Vouch-Success
+    claimheader: X-Vouch-IdP-Claims-
 
     # GENERAL WARNING ABOUT claims AND tokens
     # all of these config elements can cause performance impacts due to the amount of information being 
